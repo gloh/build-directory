@@ -108,10 +108,12 @@
   .dot-inprogress { background: #818cf8; }
   .dot-prototype  { background: #fbbf24; }
   .dot-planning   { background: #a78bfa; }
+  .dot-buildlist  { background: #6cb4ff; }
   .status-active    { background: rgba(52,211,153,0.1);  color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
   .status-inprogress    { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
   .status-prototype { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
   .status-planning  { background: rgba(139,92,246,0.1);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+  .status-buildlist { background: rgba(108,180,255,0.1); color: #6cb4ff; border: 1px solid rgba(108,180,255,0.2); }
 
   .project-logo { width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; margin-right: 8px; position: relative; top: -1px; }
 
@@ -495,11 +497,11 @@
     </div>
   </div>
 
-  <div class="project-card" data-card-id="performance-culture-framework" data-status="active">
+  <div class="project-card" data-card-id="performance-culture-framework" data-status="buildlist">
     <div class="card-header">
       <span class="project-name"><svg class="project-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#1a1a2e"/><path d="M8 24 L8 14" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M14 24 L14 10" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M20 24 L20 16" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M26 24 L26 8" stroke="#34d399" stroke-width="3" stroke-linecap="round"/></svg>Performance Culture Framework</span>
       <div class="card-header-right">
-        <span class="status-badge status-active">Production</span>
+        <span class="status-badge status-buildlist">Build List</span>
         <button class="eye-btn" onclick="toggleProjectArchive('performance-culture-framework', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
     </div>
@@ -590,7 +592,7 @@
 
   <div class="project-card" data-card-id="crs-product-landscape" data-status="prototype">
     <div class="card-header">
-      <span class="project-name"><img class="project-logo" src="images/crs-product-landscape-favicon.svg" alt="">Introduction to CRS</span>
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">Introduction to CRS</span>
       <div class="card-header-right">
         <span class="status-badge status-prototype">Prototype</span>
         <button class="eye-btn" onclick="toggleProjectArchive('crs-product-landscape', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
@@ -652,7 +654,8 @@
           <span class="col-title">Done</span>
           <span class="col-count" id="count-done">0</span>
         </div>
-        <div class="col-cards" id="col-done"></div>
+        <div class="col-cards" id="col-done"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)"></div>
       </div>
 
     </div>
@@ -806,6 +809,29 @@ function renderBoard() {
     }
   });
 
+  // Render project cards with "buildlist" status as kanban cards in backlog
+  const statuses = getStatuses();
+  document.querySelectorAll('.project-card').forEach(card => {
+    const cardId = card.dataset.cardId;
+    const status = statuses[cardId] || card.dataset.status;
+    if (status !== 'buildlist') return;
+    const blId = 'proj-' + cardId;
+    if (done.includes(blId)) {
+      document.getElementById('col-done').appendChild(buildKCard({
+        id: blId, name: card.querySelector('.project-name').textContent.trim(),
+        desc: card.querySelector('.project-purpose')?.textContent || '',
+        tags: Array.from(card.querySelectorAll('.tech-tag')).map(t => t.textContent)
+      }, false, true));
+    } else if (!archived.includes(blId)) {
+      const col = colMap[blId] || 'backlog';
+      document.getElementById('col-'+col).appendChild(buildKCard({
+        id: blId, name: card.querySelector('.project-name').textContent.trim(),
+        desc: card.querySelector('.project-purpose')?.textContent || '',
+        tags: Array.from(card.querySelectorAll('.tech-tag')).map(t => t.textContent)
+      }, false, false));
+    }
+  });
+
   updateCounts();
   renderArchive();
 }
@@ -815,10 +841,23 @@ function updateCounts() {
     const n = document.querySelectorAll(`#col-${c} .kcard:not(.search-hidden)`).length;
     document.getElementById('count-'+c).textContent = n;
   });
-  // update header bl-count to exclude done items
-  const total = BL_CARDS.length - getDone().length;
+  // update header counts
+  const statuses = getStatuses();
+  const blProjects = document.querySelectorAll('.project-card').length
+    ? Array.from(document.querySelectorAll('.project-card')).filter(c => {
+        const s = statuses[c.dataset.cardId] || c.dataset.status;
+        return s === 'buildlist';
+      }).length
+    : 0;
+  const blTotal = BL_CARDS.length - getDone().length + blProjects;
   const blCountEl = document.getElementById('bl-count');
-  if (blCountEl) blCountEl.textContent = total;
+  if (blCountEl) blCountEl.textContent = blTotal;
+
+  const projCountEl = document.getElementById('project-count');
+  if (projCountEl) {
+    const projTotal = document.querySelectorAll('.project-card').length - blProjects;
+    projCountEl.textContent = projTotal;
+  }
 }
 
 // ── Archive panel ─────────────────────────────────────────────────────────────
@@ -884,7 +923,15 @@ function onDrop(e, col) {
   e.currentTarget.classList.remove('drag-over');
   const id = e.dataTransfer.getData('text/plain');
   if (!id) return;
-  const m = getColMap(); m[id] = col; saveColMap(m);
+  const d = getDone();
+  if (col === 'done') {
+    if (!d.includes(id)) d.push(id);
+    saveDone(d);
+  } else {
+    const i = d.indexOf(id);
+    if (i !== -1) { d.splice(i, 1); saveDone(d); }
+    const m = getColMap(); m[id] = col; saveColMap(m);
+  }
   renderBoard(); applySearch();
 }
 
@@ -896,12 +943,14 @@ function applyDisplay() {
   const q = document.getElementById('search').value.toLowerCase().trim();
   const f = currentFilter;
   const archived = getArchived();
+  const statuses = getStatuses();
 
   // ── project cards ──
   let anyProject = false;
   document.querySelectorAll('.project-card').forEach(c => {
     const cardId = c.dataset.cardId;
     const isArchived = archived.includes('proj-' + cardId);
+    const effectiveStatus = statuses[cardId] || c.dataset.status || '';
     const btn = c.querySelector('.eye-btn');
 
     if (f === 'hidden') {
@@ -916,13 +965,12 @@ function applyDisplay() {
       return;
     }
 
-    if (f === 'buildlist' || isArchived) {
+    if (f === 'buildlist' || isArchived || effectiveStatus === 'buildlist') {
       c.style.display = 'none';
       return;
     }
 
-    const status = c.dataset.status || '';
-    const matchesFilter = f === 'all' || status === f;
+    const matchesFilter = f === 'all' || effectiveStatus === f;
     const matchesSearch = !q || c.textContent.toLowerCase().includes(q);
     const show = matchesFilter && matchesSearch;
     c.style.display = show ? '' : 'none';
@@ -1144,7 +1192,8 @@ const STATUS_MAP = {
   active:     { cls: 'status-active',     label: 'Production',  dot: 'dot-active' },
   inprogress: { cls: 'status-inprogress', label: 'In Progress', dot: 'dot-inprogress' },
   prototype:  { cls: 'status-prototype',  label: 'Prototype',   dot: 'dot-prototype' },
-  planning:   { cls: 'status-planning',   label: 'Planning',    dot: 'dot-planning' }
+  planning:   { cls: 'status-planning',   label: 'Planning',    dot: 'dot-planning' },
+  buildlist:  { cls: 'status-buildlist',  label: 'Build List',  dot: 'dot-buildlist' }
 };
 const getStatuses  = () => { try { return JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); } catch { return {}; } };
 const saveStatuses = m => localStorage.setItem(STATUS_KEY, JSON.stringify(m));
@@ -1188,6 +1237,7 @@ function setStatus(cardId, newStatus) {
   const saved = getStatuses();
   saved[cardId] = newStatus;
   saveStatuses(saved);
+  renderBoard();
   applyDisplay();
 }
 
@@ -1222,6 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
   migrateEnhancements();
   initEnhancements();
   initStatusBadges();
+  applyDisplay();
 });
 </script>
 </body>
