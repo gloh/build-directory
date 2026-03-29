@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#1a1a2e"/>
+  <g stroke="#e0a526" stroke-width="1.5" fill="none">
+    <!-- Frame -->
+    <rect x="6" y="5" width="20" height="22" rx="2"/>
+    <!-- Rods -->
+    <line x1="6" y1="12" x2="26" y2="12"/>
+    <line x1="6" y1="19" x2="26" y2="19"/>
+  </g>
+  <!-- Beads row 1 -->
+  <circle cx="10" cy="8.5" r="2" fill="#e0a526"/>
+  <circle cx="15" cy="8.5" r="2" fill="#c4891a"/>
+  <circle cx="20" cy="8.5" r="2" fill="#e0a526"/>
+  <!-- Beads row 2 -->
+  <circle cx="11" cy="15.5" r="2" fill="#c4891a"/>
+  <circle cx="17" cy="15.5" r="2" fill="#e0a526"/>
+  <circle cx="23" cy="15.5" r="2" fill="#c4891a"/>
+  <!-- Beads row 3 -->
+  <circle cx="9" cy="22.5" r="2" fill="#e0a526"/>
+  <circle cx="14" cy="22.5" r="2" fill="#e0a526"/>
+  <circle cx="21" cy="22.5" r="2" fill="#c4891a"/>
+</svg>

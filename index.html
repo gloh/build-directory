@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garrett's Laboratory</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 40px 24px 60px;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; transition: max-width 0.2s; }
+
+  /* ── Build List full-width mode ── */
+  body.buildlist-active .container { max-width: 100%; }
+  body.buildlist-active .board { min-width: unset; width: 100%; }
+  body.buildlist-active .column { flex: 1; width: auto; min-width: 220px; }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid #1e1e1e;
+    padding-bottom: 24px;
+  }
+
+  header h1 { font-size: 26px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+  header p  { color: #666; margin-top: 6px; font-size: 14px; }
+
+  .stats-bar { display: flex; gap: 28px; margin-top: 14px; }
+  .stat { font-size: 13px; color: #444; }
+  .stat strong { color: #888; font-weight: 500; }
+
+  /* ── Search ── */
+  .search-bar { margin-bottom: 28px; }
+  .search-bar input {
+    width: 100%;
+    padding: 11px 16px;
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
+    color: #e0e0e0;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-bar input::placeholder { color: #444; }
+  .search-bar input:focus { border-color: #333; }
+
+  /* ── Project cards (list) ── */
+  .project-card {
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-radius: 12px;
+    padding: 26px;
+    margin-bottom: 16px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .project-card:hover { border-color: #2a2a2a; background: #131313; }
+  .project-card.search-hidden { display: none; }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .project-name { font-size: 18px; font-weight: 600; color: #fff; flex: 1; }
+
+  .card-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  .status-badge {
+    font-size: 10px; font-weight: 500;
+    padding: 3px 9px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    cursor: pointer; position: relative; transition: opacity 0.12s;
+  }
+  .status-badge:hover { opacity: 0.8; }
+
+  .status-dropdown {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 100;
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 4px; min-width: 150px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .status-dropdown-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 5px; cursor: pointer;
+    font-size: 11px; font-weight: 500; color: #aaa;
+    transition: background 0.1s;
+  }
+  .status-dropdown-item:hover { background: #222; }
+  .status-dropdown-item.current { color: #fff; background: #1e1e1e; }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-active     { background: #34d399; }
+  .dot-inprogress { background: #818cf8; }
+  .dot-prototype  { background: #fbbf24; }
+  .dot-planning   { background: #a78bfa; }
+  .status-active    { background: rgba(52,211,153,0.1);  color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .status-inprogress    { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
+  .status-prototype { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+  .status-planning  { background: rgba(139,92,246,0.1);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+
+  .project-logo { width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; margin-right: 8px; position: relative; top: -1px; }
+
+  .eye-btn {
+    background: none; border: none; cursor: pointer;
+    color: #222; padding: 1px; display: flex; flex-shrink: 0;
+    transition: color 0.12s;
+  }
+  .project-card:hover .eye-btn { color: #404040; }
+  .eye-btn:hover { color: #777 !important; }
+  .eye-btn svg {
+    width: 14px; height: 14px; fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .project-purpose {
+    color: #888; font-size: 14px; line-height: 1.55; margin-bottom: 16px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px; margin-bottom: 16px;
+  }
+  .meta-item { font-size: 12px; }
+  .meta-label { color: #444; margin-bottom: 2px; }
+  .meta-value { color: #aaa; font-weight: 500; }
+
+  .tech-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 16px; }
+  .tech-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 5px;
+    background: #151525; color: #6874d8; border: 1px solid #1e2040;
+  }
+
+  .card-links { display: flex; gap: 12px; padding-top: 14px; border-top: 1px solid #1a1a1a; }
+  .card-link {
+    font-size: 12px; color: #4a88c0; text-decoration: none;
+    display: flex; align-items: center; gap: 4px; transition: color 0.12s;
+  }
+  .card-link:hover { color: #7ab8e0; }
+  .card-link svg { width: 12px; height: 12px; fill: currentColor; }
+
+  /* ── Enhancement list ── */
+  .enhancements { margin-top: 14px; border-top: 1px solid #1a1a1a; padding-top: 10px; }
+
+  .enh-toggle {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer; color: #444;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
+    font-family: inherit; padding: 0; transition: color 0.12s;
+  }
+  .enh-toggle:hover { color: #888; }
+  .enh-toggle svg.enh-chev {
+    width: 10px; height: 10px; fill: none; stroke: currentColor;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.18s; flex-shrink: 0;
+  }
+  .enh-toggle.open svg.enh-chev { transform: rotate(90deg); }
+  .enh-count {
+    font-size: 9px; padding: 1px 6px; border-radius: 999px;
+    background: rgba(99,102,241,0.08); color: #818cf8; font-weight: 500;
+  }
+
+  .enh-body { display: none; padding-top: 10px; }
+  .enh-body.open { display: block; }
+
+  .enh-list { list-style: none; margin: 0; padding: 0; }
+  .enh-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid #151515;
+    font-size: 12px; color: #999; line-height: 1.5;
+    transition: opacity 0.12s;
+  }
+  .enh-item:last-child { border-bottom: none; }
+  .enh-item.enh-dragging { opacity: 0.25; }
+  .enh-item.enh-drag-over { border-top: 2px solid #818cf8; padding-top: 4px; }
+
+  .enh-grip {
+    flex-shrink: 0; cursor: grab; color: #2a2a2a; margin-top: 2px;
+    transition: color 0.12s; display: flex; align-items: center;
+  }
+  .enh-grip:hover { color: #555; }
+  .enh-grip:active { cursor: grabbing; }
+  .enh-grip svg { width: 10px; height: 14px; fill: currentColor; }
+
+  .enh-cb {
+    width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+    appearance: none; -webkit-appearance: none; background: #1a1a1a; border: 1px solid #333;
+    cursor: pointer; position: relative; transition: background 0.12s, border-color 0.12s;
+  }
+  .enh-cb:checked {
+    background: #818cf8; border-color: #818cf8;
+  }
+  .enh-cb:checked::after {
+    content: ''; position: absolute; left: 3.5px; top: 1px;
+    width: 4px; height: 7px; border: solid #fff; border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+  .enh-text { flex: 1; transition: color 0.12s, text-decoration 0.12s; }
+  .enh-item.done .enh-text { color: #444; text-decoration: line-through; }
+
+  .enh-item .enh-remove {
+    background: none; border: none; cursor: pointer; color: #2a2a2a;
+    font-size: 14px; line-height: 1; padding: 0 2px; transition: color 0.12s; flex-shrink: 0;
+  }
+  .enh-item .enh-remove:hover { color: #e55; }
+
+  .enh-add-row { display: flex; gap: 6px; margin-top: 8px; }
+  .enh-add-input {
+    flex: 1; padding: 6px 10px;
+    background: #0e0e0e; border: 1px solid #1e1e1e; border-radius: 6px;
+    color: #ccc; font-size: 12px; font-family: inherit; outline: none;
+    transition: border-color 0.15s;
+  }
+  .enh-add-input::placeholder { color: #333; }
+  .enh-add-input:focus { border-color: #333; }
+  .enh-add-btn {
+    padding: 5px 12px; border-radius: 6px;
+    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+    color: #818cf8; font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background 0.12s;
+  }
+  .enh-add-btn:hover { background: rgba(99,102,241,0.18); }
+
+  /* ── Section divider ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: #333;
+    margin: 44px 0 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: #1a1a1a; }
+
+  /* ── Kanban board (build list only) ── */
+  .board-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px 16px; }
+
+  .board {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    min-width: max-content;
+  }
+
+  .column { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; }
+
+  .col-header {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 10px 10px;
+  }
+
+  .col-title { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+  .col-count { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 999px; }
+
+  .col-active  .col-title { color: #34d399; }
+  .col-active  .col-header { border-bottom: 2px solid rgba(52,211,153,0.2); }
+  .col-active  .col-count  { background: rgba(52,211,153,0.08); color: #34d399; }
+
+  .col-next    .col-title { color: #6cb4ff; }
+  .col-next    .col-header { border-bottom: 2px solid rgba(108,180,255,0.2); }
+  .col-next    .col-count  { background: rgba(108,180,255,0.08); color: #6cb4ff; }
+
+  .col-backlog .col-title { color: #555; }
+  .col-backlog .col-header { border-bottom: 2px solid #1c1c1c; }
+  .col-backlog .col-count  { background: #141414; color: #444; }
+
+  .col-done    .col-title { color: #34d399; }
+  .col-done    .col-header { border-bottom: 2px solid rgba(52,211,153,0.15); }
+  .col-done    .col-count  { background: rgba(52,211,153,0.06); color: #34d399; }
+  .col-done .kcard { border-left-color: rgba(52,211,153,0.25); opacity: 0.55; }
+  .col-done .kcard:hover { opacity: 0.8; }
+  .col-done .kcard-name { text-decoration: line-through; color: #888; }
+
+  .col-cards {
+    padding: 10px 0 0;
+    min-height: 200px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 7px;
+    border-radius: 6px; transition: background 0.12s;
+  }
+
+  .col-cards.drag-over {
+    background: rgba(255,255,255,0.02);
+    outline: 1px dashed #282828; outline-offset: 3px;
+  }
+
+  /* ── Kanban mini-cards ── */
+  .kcard {
+    background: #111; border: 1px solid #1e1e1e; border-left: 3px solid #1a3a52;
+    border-radius: 8px; padding: 11px 12px 9px;
+    cursor: grab; transition: border-color 0.12s, box-shadow 0.12s;
+    user-select: none;
+  }
+  .kcard:hover { border-color: #262626; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .kcard.dragging { opacity: 0.35; cursor: grabbing; }
+  .kcard.search-hidden { display: none; }
+
+  .kcard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 4px; }
+  .kcard-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .done-btn {
+    background: none; border: 1px solid #1e3a2a; border-radius: 4px; cursor: pointer;
+    color: #2a5a3a; padding: 2px 5px; font-size: 10px; line-height: 1;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    display: flex; align-items: center; gap: 3px; font-family: inherit; font-weight: 600;
+  }
+  .done-btn:hover { background: rgba(52,211,153,0.1); color: #34d399; border-color: rgba(52,211,153,0.3); }
+  .done-btn svg { width: 9px; height: 9px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .undo-btn {
+    background: none; border: 1px solid #1e2a1e; border-radius: 4px; cursor: pointer;
+    color: #3a6a4a; padding: 2px 5px; font-size: 10px; line-height: 1;
+    transition: background 0.12s, color 0.12s; display: flex; align-items: center;
+    gap: 3px; font-family: inherit; font-weight: 600;
+  }
+  .undo-btn:hover { background: rgba(52,211,153,0.08); color: #34d399; }
+  .kcard-name { font-size: 12.5px; font-weight: 600; color: #d8d8d8; line-height: 1.3; flex: 1; }
+
+  .kcard-desc {
+    font-size: 11px; color: #555; line-height: 1.5; margin-bottom: 7px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .kcard-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+  .kcard-tag {
+    font-size: 9.5px; padding: 1px 6px; border-radius: 4px;
+    background: #141424; color: #4a58b8; border: 1px solid #1a1a38;
+  }
+
+  /* ── Filter pills ── */
+  .filter-bar { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 24px; }
+  .filter-pill {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.4px;
+    padding: 5px 13px; border-radius: 999px;
+    border: 1px solid #1e1e1e; background: #0f0f0f; color: #555;
+    cursor: pointer; transition: all 0.13s; font-family: inherit;
+  }
+  .filter-pill:hover { color: #888; border-color: #2a2a2a; }
+  .filter-pill.active { background: #1a1a2e; color: #6874d8; border-color: #272748; }
+  .filter-pill.pill-buildlist.active { background: rgba(108,180,255,0.08); color: #6cb4ff; border-color: rgba(108,180,255,0.2); }
+  .filter-pill.pill-hidden.active { background: #141414; color: #555; border-color: #282828; }
+
+  /* ── No results ── */
+  .no-results { text-align: center; color: #444; padding: 32px 0; font-size: 14px; display: none; }
+
+  /* ── Hidden drawer ── */
+  .archive-section { margin-top: 48px; }
+
+  .archive-toggle {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 0 0; border-top: 1px solid #141414;
+    cursor: pointer; color: #2e2e2e;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    background: none; border-bottom: none; border-left: none; border-right: none;
+    font-family: inherit; width: 100%; text-align: left; transition: color 0.12s;
+  }
+  .archive-toggle:hover { color: #555; }
+  .archive-toggle svg.chev {
+    width: 12px; height: 12px; fill: none; stroke: currentColor;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.18s; flex-shrink: 0;
+  }
+  .archive-toggle.open svg.chev { transform: rotate(180deg); }
+  .archive-count { background: #141414; color: #383838; font-size: 9px; padding: 1px 6px; border-radius: 999px; }
+
+  .archive-list { display: none; padding-top: 16px; }
+  .archive-list.open { display: block; }
+  .archive-list .project-card,
+  .archive-list .kcard { opacity: 0.4; cursor: default; }
+  .archive-list .project-card:hover,
+  .archive-list .kcard:hover { opacity: 0.65; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Garrett's Laboratory</h1>
+    <p>Everything Garrett has built with Claude</p>
+    <div class="stats-bar">
+      <div class="stat"><strong id="project-count">8</strong> projects</div>
+      <div class="stat"><strong id="bl-count">20</strong> in build list</div>
+      <div class="stat">Started <strong>Mar 17, 2026</strong></div>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Search everything..." oninput="applySearch()">
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-pill active"          onclick="setFilter('all',this)">All</button>
+    <button class="filter-pill"                 onclick="setFilter('active',this)">Production</button>
+    <button class="filter-pill"                 onclick="setFilter('inprogress',this)">In Progress</button>
+    <button class="filter-pill"                 onclick="setFilter('prototype',this)">Prototype</button>
+    <button class="filter-pill pill-buildlist"  onclick="setFilter('buildlist',this)">Build List</button>
+    <button class="filter-pill pill-hidden"     onclick="setFilter('hidden',this)">Hidden</button>
+  </div>
+
+  <div id="no-results" class="no-results">No items match your search.</div>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- PROJECTS LIST                                                       -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+
+  <div class="project-card" data-card-id="post-monster" data-status="active">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/post-monster-logo.png" alt="">Post Monster</span>
+      <div class="card-header-right">
+        <span class="status-badge status-active">Production</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('post-monster', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">A Slack bot that generates and schedules LinkedIn posts using Claude. DM it your raw thoughts, and it drafts polished posts you can review, edit, and schedule — all from Slack.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 17, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Last commit</div><div class="meta-value">Mar 19, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Commits</div><div class="meta-value">12</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/post-monster</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Node.js</span><span class="tech-tag">Slack Bolt</span><span class="tech-tag">Claude API</span><span class="tech-tag">LinkedIn</span><span class="tech-tag">Railway</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://github.com/garrettloh/post-monster" target="_blank"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="crs-compliance-bulletin" data-status="active">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">CRS Compliance Bulletin</span>
+      <div class="card-header-right">
+        <span class="status-badge status-active">Production</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('crs-compliance-bulletin', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">A compliance notices bulletin board for CRS Credit. Public-facing page with regulatory updates and a password-protected admin panel for the Head of Compliance.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 22, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-value">Functional, pre-branding</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/compliance-bulletin</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Vercel Serverless</span><span class="tech-tag">Vercel Blob</span><span class="tech-tag">JWT Auth</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://compliance-bulletin.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Public Bulletin</a>
+      <a class="card-link" href="https://compliance-bulletin.vercel.app/admin" target="_blank"><svg viewBox="0 0 16 16"><path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zm-9 8c0-2.21 2.69-4 6-4s6 1.79 6 4v1H2v-1z"/></svg>Admin Panel</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="credit-freeze-app" data-status="prototype">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">Credit Freeze App</span>
+      <div class="card-header-right">
+        <span class="status-badge status-prototype">Prototype</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('credit-freeze-app', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Credit freeze management prototype for CRS Credit — bureau switcher (Equifax, Experian, TransUnion), B2B dashboard, and unified audit trail.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 19, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/equifax-prototype</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Vercel</span><span class="tech-tag">3-Bureau</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://equifax-prototype.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Live App</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="project-abacus" data-status="inprogress">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/abacus-favicon.svg" alt="">Project Abacus</span>
+      <div class="card-header-right">
+        <span class="status-badge status-inprogress">In Progress</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('project-abacus', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Custom payment gateway on Moov.io to replace Paystand for CRS Credit. Payment processing, method updates, notifications, and audit logging.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 21, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-value">Project plan + research</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/abacus</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Moov.io</span><span class="tech-tag">Payment Gateway</span><span class="tech-tag">CRS Credit</span></div>
+    <div class="card-links">
+      <a class="card-link" href="file:///Users/garrettloh/Projects/abacus-project-plan.html"><svg viewBox="0 0 16 16"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM5 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zm0 2.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 015 8zm0 2.5a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5z"/></svg>Full Project Plan</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="performance-culture-framework" data-status="active">
+    <div class="card-header">
+      <span class="project-name"><svg class="project-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#1a1a2e"/><path d="M8 24 L8 14" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M14 24 L14 10" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M20 24 L20 16" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="M26 24 L26 8" stroke="#34d399" stroke-width="3" stroke-linecap="round"/></svg>Performance Culture Framework</span>
+      <div class="card-header-right">
+        <span class="status-badge status-active">Production</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('performance-culture-framework', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">The operating system for every build — Intended Outcome, Demonstrated By, By-When, Ownership, Enrollment — applied across all build list items.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Completed</div><div class="meta-value">Mar 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Scope</div><div class="meta-value">All 17 active items</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Claude AI</span><span class="tech-tag">CRS Performance Culture Doc</span><span class="tech-tag">docx</span></div>
+    <div class="card-links">
+      <a class="card-link" href="file:///Users/garrettloh/Projects/Garretts_Build_List.docx"><svg viewBox="0 0 16 16"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM5 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zm0 2.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 015 8zm0 2.5a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5z"/></svg>Build List Doc</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="crs-design-system" data-status="active">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">CRS Design System</span>
+      <div class="card-header-right">
+        <span class="status-badge status-active">Production</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('crs-design-system', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Finstack design system for CRS Credit — brand tokens, color palette, typography (Euclid Square/Poppins), component specs (buttons, inputs, modals, tables, badges), and layout rules. Reusable across all CRS projects via Claude.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Completed</div><div class="meta-value">Mar 27, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/.claude/shared/crs-design-system.md</div></div>
+      <div class="meta-item"><div class="meta-label">First applied</div><div class="meta-value">CRS Vendor Contacts</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Design System</span><span class="tech-tag">CRS Credit</span><span class="tech-tag">UI/UX</span><span class="tech-tag">Claude AI</span></div>
+    <div class="card-links">
+      <a class="card-link" href="file:///Users/garrettloh/Downloads/claude-design-system.md"><svg viewBox="0 0 16 16"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM5 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zm0 2.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 015 8zm0 2.5a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5z"/></svg>Original Source File</a>
+      <a class="card-link" href="file:///Users/garrettloh/.claude/shared/crs-design-system.md"><svg viewBox="0 0 16 16"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM5 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zm0 2.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 015 8zm0 2.5a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5z"/></svg>Claude Reference File</a>
+    </div>
+    <div class="meta-grid" style="margin-top:12px;border-top:1px solid #2a2235;padding-top:12px;">
+      <div class="meta-item" style="grid-column:1/-1;">
+        <div class="meta-label">How to use with Claude</div>
+        <div class="meta-value" style="font-size:12px;line-height:1.5;color:#999;">In any Claude Code conversation, type: <code style="background:#1e1728;padding:2px 6px;border-radius:3px;color:#b390ff;">/crsdesign</code> — Claude will apply the full Finstack design tokens, components, and layout rules to whatever you're building.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="motion-design-system" data-status="active">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/motion-logo.png" alt="">Motion Design System</span>
+      <div class="card-header-right">
+        <span class="status-badge status-active">Production</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('motion-design-system', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Design system for Motiondebt — 3-tier token architecture (brand → alias → mapped), Inter/JetBrains Mono typography, component specs (buttons, inputs, modals, tables, cards, badges, toasts), 4px grid spacing, and data pair patterns. Reusable across all Motion projects via Claude.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Completed</div><div class="meta-value">Mar 29, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/.claude/shared/motion-design-system.md</div></div>
+      <div class="meta-item"><div class="meta-label">Source</div><div class="meta-value">github.com/product-design-motion/design-system</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Design System</span><span class="tech-tag">Motiondebt</span><span class="tech-tag">UI/UX</span><span class="tech-tag">Claude AI</span><span class="tech-tag">Design Tokens</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://github.com/product-design-motion/design-system" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>GitHub Repo</a>
+      <a class="card-link" href="file:///Users/garrettloh/.claude/shared/motion-design-system.md"><svg viewBox="0 0 16 16"><path d="M3.5 2A1.5 1.5 0 002 3.5v9A1.5 1.5 0 003.5 14h9a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0012.5 2h-9zM5 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zm0 2.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 015 8zm0 2.5a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5z"/></svg>Claude Reference File</a>
+    </div>
+    <div class="meta-grid" style="margin-top:12px;border-top:1px solid #2a2235;padding-top:12px;">
+      <div class="meta-item" style="grid-column:1/-1;">
+        <div class="meta-label">How to use with Claude</div>
+        <div class="meta-value" style="font-size:12px;line-height:1.5;color:#999;">In any Claude Code conversation, type: <code style="background:#1e1728;padding:2px 6px;border-radius:3px;color:#6cb4ff;">/motiondesign</code> to apply the full design system, or <code style="background:#1e1728;padding:2px 6px;border-radius:3px;color:#6cb4ff;">/motionreview</code> to review existing UI against Motion tokens and patterns.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="crs-vendor-contacts" data-status="inprogress">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">CRS Vendor Contacts</span>
+      <div class="card-header-right">
+        <span class="status-badge status-inprogress">In Progress</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('crs-vendor-contacts', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Slack-powered vendor contact database with AI recommendations. CRUD via /vendors slash command, inline-editable web view, and "Find the Best Person" AI chat.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 24, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Contacts</div><div class="meta-value">69 across 11 vendors</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/crs-vendor-contacts</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Node.js</span><span class="tech-tag">Slack Bolt</span><span class="tech-tag">Claude Opus</span><span class="tech-tag">Express</span><span class="tech-tag">Vercel</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://crs-vendor-contacts.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Web View</a>
+    </div>
+  </div>
+
+  <div class="project-card" data-card-id="crs-product-landscape" data-status="prototype">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="images/crs-product-landscape-favicon.svg" alt="">Introduction to CRS</span>
+      <div class="card-header-right">
+        <span class="status-badge status-prototype">Prototype</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('crs-product-landscape', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">A shareable web presentation for CRS sales opportunities and platform partners. Converts the static product deck into an interactive, audience-gated web experience with two paths: Sales and Partners.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Mar 26, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Audiences</div><div class="meta-value">Sales &amp; Partners</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/crs-product-landscape</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Vercel</span></div>
+    <div class="card-links">
+      <a class="card-link" href="https://crs-product-landscape.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Live Site</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- BUILD LIST KANBAN (shown only when Build List filter is active)     -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <div id="board-section" style="display:none">
+  <div class="section-label">Build List</div>
+
+  <div class="board-scroll">
+    <div class="board">
+
+      <div class="column col-backlog">
+        <div class="col-header">
+          <span class="col-title">Backlog</span>
+          <span class="col-count" id="count-backlog">0</span>
+        </div>
+        <div class="col-cards" id="col-backlog"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'backlog')" ondragleave="onDragLeave(event)">
+        </div>
+      </div>
+
+      <div class="column col-next">
+        <div class="col-header">
+          <span class="col-title">Next</span>
+          <span class="col-count" id="count-next">0</span>
+        </div>
+        <div class="col-cards" id="col-next"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'next')" ondragleave="onDragLeave(event)">
+        </div>
+      </div>
+
+      <div class="column col-active">
+        <div class="col-header">
+          <span class="col-title">Active</span>
+          <span class="col-count" id="count-active">0</span>
+        </div>
+        <div class="col-cards" id="col-active"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'active')" ondragleave="onDragLeave(event)">
+        </div>
+      </div>
+
+      <div class="column col-done">
+        <div class="col-header">
+          <span class="col-title">Done</span>
+          <span class="col-count" id="count-done">0</span>
+        </div>
+        <div class="col-cards" id="col-done"></div>
+      </div>
+
+    </div>
+  </div>
+  </div><!-- /#board-section -->
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- HIDDEN DRAWER                                                       -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <div class="archive-section" id="archive-section" style="display:none">
+    <button class="archive-toggle" id="archive-toggle" onclick="toggleArchivePanel()">
+      <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      Hidden
+      <span class="archive-count" id="archive-count">0</span>
+    </button>
+    <div class="archive-list" id="archive-list"></div>
+  </div>
+
+</div><!-- /.container -->
+
+<script>
+// ── Build list card data ─────────────────────────────────────────────────────
+const BL_CARDS = [
+  { id:'bl-01', name:'01 · Travel + Proximity Networking', desc:'Know who is nearby on every trip. Cross-reference contacts, employees, Salesforce by location in real time.', tags:['Google Calendar','Salesforce MCP','Maps API'], defaultCol:'backlog' },
+  { id:'bl-02', name:'02 · Conversational Research Partner', desc:'Always-available thinking partner — captures ideas live, then outputs structured notes or a business plan.', tags:['Claude AI','Notion/Docs','Whisper'], defaultCol:'backlog' },
+  { id:'bl-03', name:'03 · By-When Network', desc:'Every commitment tracked with a By-When. Auto follow-up until completed or renewed. Zero dropped commitments.', tags:['Slack','Gmail','Notion/Airtable'], defaultCol:'backlog' },
+  { id:'bl-04', name:'04 · Email Pre-Write Agent', desc:'Every email has a pre-drafted response before Garrett opens it. Approve, edit, or discard in one action.', tags:['Gmail API','Claude AI','Slack'], defaultCol:'backlog' },
+  { id:'bl-05', name:'05 · Calendar & Quick Capture', desc:'Capture any thought from phone in under 5 seconds. Agent categorizes, schedules, and follows up automatically.', tags:['iOS Shortcuts','Google Calendar','Claude AI'], defaultCol:'backlog' },
+  { id:'bl-06', name:'06 · Autonomous Project Runner', desc:'Hand off a project brief — agent handles breakdown, delegation, status, and completion. Under 30 min/week.', tags:['Slack','Asana/Notion','Claude AI'], defaultCol:'backlog' },
+  { id:'bl-07', name:'07 · Investor Note App', desc:'Monthly investor note as a live tracked app — knows who read it, how long, and which sections. Auto follow-up prompts.', tags:['Claude AI','Segment/PostHog','Salesforce'], defaultCol:'backlog' },
+  { id:'bl-08', name:'08 · List → Actionable Notes', desc:'Any raw list becomes structured notes with Intended Outcomes, Demonstrated Bys, Agent Actions. Self-referential proof of concept.', tags:['Claude AI','Notion API','Google Docs'], defaultCol:'backlog' },
+  { id:'bl-09', name:'09 · AI Voice Twin', desc:'AI version of Garrett that writes and sounds like him. Target: 60–90 min audio for ElevenLabs Professional tier.', tags:['ElevenLabs','Claude AI','Whisper'], defaultCol:'backlog' },
+  { id:'bl-10', name:'10 · Invoice & Seat Usage Auditor', desc:'Full SaaS visibility — who\'s paying vs. using. One-click challenge emails. Measurable spend reduction.', tags:['Claude AI','PDF Extraction','Okta/SSO'], defaultCol:'backlog' },
+  { id:'bl-11', name:'11 · Travel Scheduling Rework', desc:'New trip → full calendar rework. Conflicts flagged, meetings moved, prep time blocked. One-click approval.', tags:['Google Calendar API','Claude AI','Gmail'], defaultCol:'backlog' },
+  { id:'bl-12', name:'12 · Replace Asana with Slack Tasks', desc:'Voice or type tasks into Slack. Agent organizes and delivers a morning briefing daily. Asana never opened again.', tags:['Slack API','Claude AI','Whisper'], defaultCol:'backlog' },
+  { id:'bl-13', name:'13 · Agent Stand-Up', desc:'Daily 8 AM Slack stand-up: top 3 priorities, open By-Whens, calendar prep, overnight flags. Read in under 5 min.', tags:['Slack','Google Calendar','Claude AI'], defaultCol:'backlog' },
+  { id:'bl-14', name:'14 · Financial Advisor Outreach', desc:'Monthly personalized outreach to financial advisor — tailored to market events and milestones. Zero effort from Garrett.', tags:['Gmail','Claude AI','Notion/Airtable'], defaultCol:'backlog' },
+  { id:'bl-15', name:'15 · Interview Prep Agent', desc:'Role-specific questions grounded in Intended Outcome and Demonstrated Bys. 10–15 questions + scoring rubric.', tags:['Claude AI','Web Search','Google Docs'], defaultCol:'backlog' },
+  { id:'bl-16', name:'16 · Winegasm.ai', desc:'AI wine pairing for any meal, occasion, or budget. 2–3 specific bottle recs with rationale, price, and where to buy.', tags:['Claude AI','Vivino API','iOS Shortcut'], defaultCol:'backlog' },
+  { id:'bl-17', name:'CRS Conference Planner', desc:'End-to-end conference planning for CRS — speakers, agenda, attendees, logistics, and follow-up all in one place.', tags:['Claude AI','CRS Credit','Events'], defaultCol:'backlog' },
+  { id:'bl-18', name:'LinkedIn Engagement Agent', desc:'Voice-matched LinkedIn content system — 30-post catalog, Slack bot spec, interactive prototype. SBA post drove 7–23× average engagement.', tags:['Claude AI','Slack Bolt','LinkedIn API','Voice Profiles'], defaultCol:'backlog' },
+  { id:'bl-19', name:'Motion Design System', desc:'Design system for Motion — unified component library, tokens, and patterns for consistent UI across the Motion platform.', tags:['Design System','Motion','UI/UX'], defaultCol:'backlog' },
+  { id:'bl-21', name:'eventslist.ai', desc:'Build and sell curated attendee lists from past events. Scrape, clean, and package contact lists — $500 per list.', tags:['AI','Web Scraping','Lead Gen','Events'], defaultCol:'backlog' }
+];
+
+// ── Filter state ─────────────────────────────────────────────────────────────
+let currentFilter = 'all';
+
+function setFilter(f, el) {
+  currentFilter = f;
+
+  // update pill styles
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+
+  const boardSection   = document.getElementById('board-section');
+  const archiveSection = document.getElementById('archive-section');
+
+  document.body.classList.toggle('buildlist-active', f === 'buildlist');
+
+  if (f === 'buildlist') {
+    boardSection.style.display = '';
+  } else {
+    boardSection.style.display = 'none';
+  }
+
+  if (f === 'hidden') {
+    archiveSection.style.display = '';
+    document.getElementById('archive-list').classList.add('open');
+    document.getElementById('archive-toggle').classList.add('open');
+  } else {
+    // archive visibility handled by applyDisplay
+  }
+
+  applyDisplay();
+}
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+const COL_KEY      = 'gl-bl-cols-v1';
+const ARCH_KEY     = 'gl-archived-v2';
+const DONE_KEY     = 'gl-done-v1';
+const getColMap    = () => { try { return JSON.parse(localStorage.getItem(COL_KEY)||'{}'); }  catch { return {}; } };
+const getArchived  = () => { try { return JSON.parse(localStorage.getItem(ARCH_KEY)||'[]'); } catch { return []; } };
+const getDone      = () => { try { return JSON.parse(localStorage.getItem(DONE_KEY)||'[]'); } catch { return []; } };
+const saveColMap   = m => localStorage.setItem(COL_KEY, JSON.stringify(m));
+const saveArchived = a => localStorage.setItem(ARCH_KEY, JSON.stringify(a));
+const saveDone     = d => localStorage.setItem(DONE_KEY, JSON.stringify(d));
+
+// ── Eye SVGs ─────────────────────────────────────────────────────────────────
+const EYE_OPEN = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_SHUT = `<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+// ── Build a kanban mini-card ──────────────────────────────────────────────────
+const CHECK_SVG = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function buildKCard(card, archived, done) {
+  const el = document.createElement('div');
+  el.className = 'kcard';
+  el.dataset.cardId = card.id;
+  el.draggable = !archived && !done;
+
+  const actionBtns = done
+    ? `<div class="kcard-actions"><button class="undo-btn" title="Move back to board">↩ Undo</button></div>`
+    : archived
+      ? `<div class="kcard-actions"><button class="eye-btn" title="Restore">${EYE_SHUT}</button></div>`
+      : `<div class="kcard-actions">
+           <button class="done-btn" title="Mark complete">${CHECK_SVG} Done</button>
+           <button class="eye-btn" title="Hide">${EYE_OPEN}</button>
+         </div>`;
+
+  el.innerHTML = `
+    <div class="kcard-top">
+      <span class="kcard-name">${card.name}</span>
+      ${actionBtns}
+    </div>
+    <div class="kcard-desc">${card.desc}</div>
+    <div class="kcard-tags">${card.tags.map(t=>`<span class="kcard-tag">${t}</span>`).join('')}</div>
+  `;
+
+  if (done) {
+    el.querySelector('.undo-btn').addEventListener('click', e => { e.stopPropagation(); toggleBLDone(card.id); });
+  } else if (archived) {
+    el.querySelector('.eye-btn').addEventListener('click', e => { e.stopPropagation(); toggleBLArchive(card.id); });
+  } else {
+    el.querySelector('.done-btn').addEventListener('click', e => { e.stopPropagation(); toggleBLDone(card.id); });
+    el.querySelector('.eye-btn').addEventListener('click', e => { e.stopPropagation(); toggleBLArchive(card.id); });
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', card.id);
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  }
+
+  return el;
+}
+
+// ── Render kanban ─────────────────────────────────────────────────────────────
+function renderBoard() {
+  ['active','next','backlog','done'].forEach(c => document.getElementById('col-'+c).innerHTML = '');
+
+  const colMap   = getColMap();
+  const archived = getArchived();
+  const done     = getDone();
+
+  BL_CARDS.forEach(card => {
+    if (done.includes(card.id)) {
+      document.getElementById('col-done').appendChild(buildKCard(card, false, true));
+    } else if (!archived.includes(card.id)) {
+      const col = colMap[card.id] || card.defaultCol;
+      document.getElementById('col-'+col).appendChild(buildKCard(card, false, false));
+    }
+  });
+
+  updateCounts();
+  renderArchive();
+}
+
+function updateCounts() {
+  ['active','next','backlog','done'].forEach(c => {
+    const n = document.querySelectorAll(`#col-${c} .kcard:not(.search-hidden)`).length;
+    document.getElementById('count-'+c).textContent = n;
+  });
+  // update header bl-count to exclude done items
+  const total = BL_CARDS.length - getDone().length;
+  const blCountEl = document.getElementById('bl-count');
+  if (blCountEl) blCountEl.textContent = total;
+}
+
+// ── Archive panel ─────────────────────────────────────────────────────────────
+function renderArchive() {
+  const archived  = getArchived();
+  const list      = document.getElementById('archive-list');
+  const section   = document.getElementById('archive-section');
+  list.innerHTML  = '';
+
+  // project cards
+  document.querySelectorAll('#archive-list-projects .project-card').forEach(c => list.appendChild(c));
+
+  // bl cards
+  const done = getDone();
+  BL_CARDS.forEach(card => {
+    if (archived.includes(card.id) && !done.includes(card.id)) list.appendChild(buildKCard(card, true, false));
+  });
+
+  const n = list.children.length;
+  document.getElementById('archive-count').textContent = n;
+  section.style.display = n === 0 ? 'none' : '';
+}
+
+function toggleArchivePanel() {
+  document.getElementById('archive-list').classList.toggle('open');
+  document.getElementById('archive-toggle').classList.toggle('open');
+}
+
+// ── BL archive toggle ─────────────────────────────────────────────────────────
+function toggleBLArchive(id) {
+  const a = getArchived(), i = a.indexOf(id);
+  if (i === -1) a.push(id); else a.splice(i, 1);
+  saveArchived(a);
+  renderBoard();
+  applySearch();
+}
+
+// ── BL done toggle ────────────────────────────────────────────────────────────
+function toggleBLDone(id) {
+  const d = getDone(), i = d.indexOf(id);
+  if (i === -1) d.push(id); else d.splice(i, 1);
+  saveDone(d);
+  renderBoard();
+  applySearch();
+}
+
+// ── Project card archive toggle ───────────────────────────────────────────────
+function toggleProjectArchive(id, btn) {
+  const archived = getArchived();
+  const key = 'proj-' + id;
+  const i = archived.indexOf(key);
+  if (i === -1) archived.push(key); else archived.splice(i, 1);
+  saveArchived(archived);
+  renderBoard();
+  applyDisplay();
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+function onDragOver(e)  { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e, col) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const m = getColMap(); m[id] = col; saveColMap(m);
+  renderBoard(); applySearch();
+}
+
+// ── Search (delegates to applyDisplay) ───────────────────────────────────────
+function applySearch() { applyDisplay(); }
+
+// ── Master display function ───────────────────────────────────────────────────
+function applyDisplay() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const f = currentFilter;
+  const archived = getArchived();
+
+  // ── project cards ──
+  let anyProject = false;
+  document.querySelectorAll('.project-card').forEach(c => {
+    const cardId = c.dataset.cardId;
+    const isArchived = archived.includes('proj-' + cardId);
+    const btn = c.querySelector('.eye-btn');
+
+    if (f === 'hidden') {
+      // show only archived project cards
+      const matchesSearch = !q || c.textContent.toLowerCase().includes(q);
+      const show = isArchived && matchesSearch;
+      c.style.display = show ? '' : 'none';
+      c.style.opacity = '';
+      c.style.pointerEvents = '';
+      if (btn) btn.innerHTML = isArchived ? EYE_SHUT : EYE_OPEN;
+      if (show) anyProject = true;
+      return;
+    }
+
+    if (f === 'buildlist' || isArchived) {
+      c.style.display = 'none';
+      return;
+    }
+
+    const status = c.dataset.status || '';
+    const matchesFilter = f === 'all' || status === f;
+    const matchesSearch = !q || c.textContent.toLowerCase().includes(q);
+    const show = matchesFilter && matchesSearch;
+    c.style.display = show ? '' : 'none';
+    c.style.opacity = '';
+    c.style.pointerEvents = '';
+    if (btn) btn.innerHTML = EYE_OPEN;
+    if (show) anyProject = true;
+  });
+
+  // ── kanban cards ──
+  let anyBL = false;
+  document.querySelectorAll('.kcard').forEach(c => {
+    const match = !q || c.textContent.toLowerCase().includes(q);
+    c.classList.toggle('search-hidden', !match);
+    if (match) anyBL = true;
+  });
+
+  // ── archive section (BL cards in hidden view) ──
+  const archiveSection = document.getElementById('archive-section');
+  if (f === 'hidden') {
+    renderArchive();
+    const hasBLArchived = BL_CARDS.some(c => archived.includes(c.id));
+    archiveSection.style.display = hasBLArchived ? '' : 'none';
+    if (hasBLArchived) {
+      document.getElementById('archive-list').classList.add('open');
+      document.getElementById('archive-toggle').classList.add('open');
+    }
+  } else {
+    archiveSection.style.display = 'none';
+  }
+
+  // ── no-results ──
+  let noResults = false;
+  if (f === 'hidden') noResults = !anyProject && !BL_CARDS.some(c => archived.includes(c.id));
+  else if (f === 'buildlist') noResults = !anyBL;
+  else noResults = !anyProject;
+  document.getElementById('no-results').style.display = noResults ? 'block' : 'none';
+
+  updateCounts();
+}
+
+// ── Restore archived project cards on load ────────────────────────────────────
+function restoreProjectStates() {
+  const archived = getArchived();
+  document.querySelectorAll('.project-card').forEach(card => {
+    const id = 'proj-' + card.dataset.cardId;
+    if (archived.includes(id)) {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// ── Enhancements ─────────────────────────────────────────────────────────────
+const ENH_KEY = 'gl-enhancements-v1';
+const getEnhancements = () => { try { return JSON.parse(localStorage.getItem(ENH_KEY)||'{}'); } catch { return {}; } };
+const saveEnhancements = m => localStorage.setItem(ENH_KEY, JSON.stringify(m));
+
+function migrateEnhancements() {
+  const all = getEnhancements();
+  let changed = false;
+  for (const k in all) {
+    if (Array.isArray(all[k])) {
+      all[k] = all[k].map(item => typeof item === 'string' ? { text: item, done: false } : item);
+      changed = true;
+    }
+  }
+  if (changed) saveEnhancements(all);
+}
+
+const GRIP_SVG = `<svg viewBox="0 0 10 14"><circle cx="3" cy="2" r="1.2"/><circle cx="7" cy="2" r="1.2"/><circle cx="3" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="3" cy="12" r="1.2"/><circle cx="7" cy="12" r="1.2"/></svg>`;
+
+let enhDragState = null;
+
+function buildEnhSection(cardId) {
+  const all = getEnhancements();
+  const items = all[cardId] || [];
+  const doneCount = items.filter(i => i.done).length;
+  const countLabel = doneCount > 0 ? `${doneCount}/${items.length}` : `${items.length}`;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'enhancements';
+  wrap.innerHTML = `
+    <button class="enh-toggle" onclick="toggleEnh(this)">
+      <svg class="enh-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+      Enhancements
+      <span class="enh-count">${countLabel}</span>
+    </button>
+    <div class="enh-body">
+      <ul class="enh-list">
+        ${items.map((item, i) => `
+          <li class="enh-item${item.done ? ' done' : ''}" draggable="true" data-card-id="${cardId}" data-enh-idx="${i}">
+            <span class="enh-grip" title="Drag to reorder">${GRIP_SVG}</span>
+            <input type="checkbox" class="enh-cb" ${item.done ? 'checked' : ''} onchange="toggleEnhDone('${cardId}',${i},this.checked)">
+            <span class="enh-text">${escHtml(item.text)}</span>
+            <button class="enh-remove" title="Remove" onclick="removeEnh('${cardId}',${i})">&times;</button>
+          </li>
+        `).join('')}
+      </ul>
+      <div class="enh-add-row">
+        <input class="enh-add-input" placeholder="Add an enhancement..." onkeydown="if(event.key==='Enter')addEnh('${cardId}',this)">
+        <button class="enh-add-btn" onclick="addEnh('${cardId}',this.previousElementSibling)">Add</button>
+      </div>
+    </div>
+  `;
+
+  // wire up drag events on each item
+  wrap.querySelectorAll('.enh-item[draggable]').forEach(li => {
+    li.addEventListener('dragstart', enhDragStart);
+    li.addEventListener('dragover', enhDragOver);
+    li.addEventListener('dragleave', enhDragLeave);
+    li.addEventListener('drop', enhDrop);
+    li.addEventListener('dragend', enhDragEnd);
+  });
+
+  return wrap;
+}
+
+function enhDragStart(e) {
+  const li = e.currentTarget;
+  enhDragState = { cardId: li.dataset.cardId, fromIdx: parseInt(li.dataset.enhIdx) };
+  li.classList.add('enh-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function enhDragOver(e) {
+  e.preventDefault();
+  const li = e.currentTarget;
+  if (!enhDragState || li.dataset.cardId !== enhDragState.cardId) return;
+  li.classList.add('enh-drag-over');
+}
+
+function enhDragLeave(e) {
+  e.currentTarget.classList.remove('enh-drag-over');
+}
+
+function enhDrop(e) {
+  e.preventDefault();
+  const li = e.currentTarget;
+  li.classList.remove('enh-drag-over');
+  if (!enhDragState || li.dataset.cardId !== enhDragState.cardId) return;
+  const toIdx = parseInt(li.dataset.enhIdx);
+  const { cardId, fromIdx } = enhDragState;
+  if (fromIdx === toIdx) return;
+
+  const all = getEnhancements();
+  const items = all[cardId];
+  if (!items) return;
+  const [moved] = items.splice(fromIdx, 1);
+  items.splice(toIdx, 0, moved);
+  saveEnhancements(all);
+  refreshEnhForCard(cardId);
+}
+
+function enhDragEnd(e) {
+  enhDragState = null;
+  document.querySelectorAll('.enh-dragging').forEach(el => el.classList.remove('enh-dragging'));
+  document.querySelectorAll('.enh-drag-over').forEach(el => el.classList.remove('enh-drag-over'));
+}
+
+function escHtml(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function toggleEnh(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+function addEnh(cardId, input) {
+  const text = input.value.trim();
+  if (!text) return;
+  const all = getEnhancements();
+  if (!all[cardId]) all[cardId] = [];
+  all[cardId].push({ text, done: false });
+  saveEnhancements(all);
+  refreshEnhForCard(cardId);
+}
+
+function toggleEnhDone(cardId, idx, done) {
+  const all = getEnhancements();
+  if (!all[cardId] || !all[cardId][idx]) return;
+  all[cardId][idx].done = done;
+  saveEnhancements(all);
+  refreshEnhForCard(cardId);
+}
+
+function removeEnh(cardId, idx) {
+  const all = getEnhancements();
+  if (!all[cardId]) return;
+  all[cardId].splice(idx, 1);
+  if (all[cardId].length === 0) delete all[cardId];
+  saveEnhancements(all);
+  refreshEnhForCard(cardId);
+}
+
+function refreshEnhForCard(cardId) {
+  const card = document.querySelector(`.project-card[data-card-id="${cardId}"]`);
+  if (!card) return;
+  const wasOpen = card.querySelector('.enh-toggle.open') !== null;
+  const old = card.querySelector('.enhancements');
+  const fresh = buildEnhSection(cardId);
+  if (wasOpen) {
+    fresh.querySelector('.enh-toggle').classList.add('open');
+    fresh.querySelector('.enh-body').classList.add('open');
+  }
+  if (old) old.replaceWith(fresh); else card.appendChild(fresh);
+}
+
+function initEnhancements() {
+  document.querySelectorAll('.project-card').forEach(card => {
+    const cardId = card.dataset.cardId;
+    card.appendChild(buildEnhSection(cardId));
+  });
+}
+
+// ── Status dropdown ──────────────────────────────────────────────────────────
+const STATUS_KEY = 'gl-statuses-v1';
+const STATUS_MAP = {
+  active:     { cls: 'status-active',     label: 'Production',  dot: 'dot-active' },
+  inprogress: { cls: 'status-inprogress', label: 'In Progress', dot: 'dot-inprogress' },
+  prototype:  { cls: 'status-prototype',  label: 'Prototype',   dot: 'dot-prototype' },
+  planning:   { cls: 'status-planning',   label: 'Planning',    dot: 'dot-planning' }
+};
+const getStatuses  = () => { try { return JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); } catch { return {}; } };
+const saveStatuses = m => localStorage.setItem(STATUS_KEY, JSON.stringify(m));
+
+function closeStatusDropdown() {
+  const old = document.querySelector('.status-dropdown');
+  if (old) old.remove();
+}
+
+function toggleStatusDropdown(badge, cardId) {
+  const existing = badge.parentElement.querySelector('.status-dropdown');
+  closeStatusDropdown();
+  if (existing) return;
+
+  const current = badge.closest('.project-card').dataset.status;
+  const dd = document.createElement('div');
+  dd.className = 'status-dropdown';
+  dd.onclick = e => e.stopPropagation();
+
+  Object.entries(STATUS_MAP).forEach(([key, s]) => {
+    const item = document.createElement('div');
+    item.className = 'status-dropdown-item' + (key === current ? ' current' : '');
+    item.innerHTML = `<span class="status-dot ${s.dot}"></span>${s.label}`;
+    item.onclick = () => { setStatus(cardId, key); closeStatusDropdown(); };
+    dd.appendChild(item);
+  });
+
+  badge.parentElement.style.position = 'relative';
+  badge.parentElement.appendChild(dd);
+}
+
+function setStatus(cardId, newStatus) {
+  const card = document.querySelector(`.project-card[data-card-id="${cardId}"]`);
+  if (!card) return;
+  const s = STATUS_MAP[newStatus];
+  card.dataset.status = newStatus;
+  const badge = card.querySelector('.status-badge');
+  badge.className = 'status-badge ' + s.cls;
+  badge.textContent = s.label;
+
+  const saved = getStatuses();
+  saved[cardId] = newStatus;
+  saveStatuses(saved);
+  applyDisplay();
+}
+
+function restoreStatuses() {
+  const saved = getStatuses();
+  Object.entries(saved).forEach(([cardId, status]) => {
+    const card = document.querySelector(`.project-card[data-card-id="${cardId}"]`);
+    if (!card || !STATUS_MAP[status]) return;
+    const s = STATUS_MAP[status];
+    card.dataset.status = status;
+    const badge = card.querySelector('.status-badge');
+    badge.className = 'status-badge ' + s.cls;
+    badge.textContent = s.label;
+  });
+}
+
+function initStatusBadges() {
+  document.querySelectorAll('.project-card').forEach(card => {
+    const cardId = card.dataset.cardId;
+    const badge = card.querySelector('.status-badge');
+    if (badge) badge.onclick = e => { e.stopPropagation(); toggleStatusDropdown(badge, cardId); };
+  });
+}
+
+document.addEventListener('click', closeStatusDropdown);
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  restoreProjectStates();
+  restoreStatuses();
+  renderBoard();
+  migrateEnhancements();
+  initEnhancements();
+  initStatusBadges();
+});
+</script>
+</body>
+</html>
