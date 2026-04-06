@@ -499,9 +499,36 @@
     flex: 1; width: 100%; padding: 8px 32px 32px;
     background: none; border: none; outline: none; resize: none;
     color: #c7c7cc; font-size: 15px; line-height: 1.65;
-    font-family: inherit;
+    font-family: inherit; overflow-y: auto;
   }
-  .note-body-input::placeholder { color: #3a3a3c; }
+  .note-body-input:empty::before {
+    content: 'Start writing...'; color: #3a3a3c; pointer-events: none;
+  }
+  .note-body-input ul, .note-body-input ol {
+    margin: 4px 0; padding-left: 24px;
+  }
+  .note-body-input hr {
+    border: none; border-top: 1px solid #3a3a3c; margin: 12px 0;
+  }
+
+  /* ── Formatting toolbar ── */
+  .notes-fmt-bar {
+    display: none; padding: 6px 32px; gap: 2px;
+    border-bottom: 1px solid #2c2c2e; background: #1c1c1e;
+    flex-wrap: wrap; align-items: center;
+  }
+  .notes-fmt-bar.visible { display: flex; }
+  .notes-fmt-btn {
+    background: none; border: 1px solid transparent; border-radius: 6px;
+    color: #8e8e93; width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    padding: 0; font-size: 14px; font-weight: 600;
+  }
+  .notes-fmt-btn:hover { background: #2c2c2e; color: #fff; }
+  .notes-fmt-btn.active { background: #ff9f0a22; color: #ff9f0a; border-color: #ff9f0a55; }
+  .notes-fmt-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .notes-fmt-sep { width: 1px; height: 20px; background: #2c2c2e; margin: 0 6px; }
 
   /* ── Mobile: collapse sidebar ── */
   @media (max-width: 640px) {
@@ -833,7 +860,23 @@
     <div class="notes-editor" id="notes-editor">
       <div class="notes-editor-empty" id="notes-empty">Select a note or create a new one</div>
       <input type="text" class="note-title-input" id="note-title" placeholder="Title" style="display:none" oninput="saveCurrentNote()">
-      <textarea class="note-body-input" id="note-body" placeholder="Start writing..." style="display:none" oninput="saveCurrentNote()"></textarea>
+      <div class="notes-fmt-bar" id="notes-fmt-bar">
+        <button class="notes-fmt-btn" onclick="fmtCmd('bold')" title="Bold (Cmd+B)"><b>B</b></button>
+        <button class="notes-fmt-btn" onclick="fmtCmd('italic')" title="Italic (Cmd+I)"><i>I</i></button>
+        <button class="notes-fmt-btn" onclick="fmtCmd('underline')" title="Underline (Cmd+U)"><span style="text-decoration:underline">U</span></button>
+        <div class="notes-fmt-sep"></div>
+        <button class="notes-fmt-btn" onclick="fmtCmd('insertUnorderedList')" title="Bullet list">
+          <svg viewBox="0 0 24 24"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="5" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="notes-fmt-btn" onclick="fmtCmd('insertOrderedList')" title="Numbered list">
+          <svg viewBox="0 0 24 24"><line x1="10" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="10" y1="18" x2="20" y2="18"/><text x="5" y="8" font-size="8" fill="currentColor" stroke="none" text-anchor="middle" font-family="inherit">1</text><text x="5" y="14" font-size="8" fill="currentColor" stroke="none" text-anchor="middle" font-family="inherit">2</text><text x="5" y="20" font-size="8" fill="currentColor" stroke="none" text-anchor="middle" font-family="inherit">3</text></svg>
+        </button>
+        <div class="notes-fmt-sep"></div>
+        <button class="notes-fmt-btn" onclick="insertHR()" title="Horizontal line (----)">
+          <svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12" stroke-width="2.5"/></svg>
+        </button>
+      </div>
+      <div class="note-body-input" id="note-body" contenteditable="true" style="display:none" oninput="onBodyInput()"></div>
     </div>
   </div>
 </div>
@@ -1479,18 +1522,21 @@ function showEditor(note) {
   document.getElementById('notes-empty').style.display = 'none';
   const titleEl = document.getElementById('note-title');
   const bodyEl = document.getElementById('note-body');
+  const fmtBar = document.getElementById('notes-fmt-bar');
   const delBtn = document.getElementById('notes-delete-btn');
   titleEl.style.display = '';
   bodyEl.style.display = '';
+  fmtBar.classList.add('visible');
   delBtn.style.display = '';
   titleEl.value = note.title;
-  bodyEl.value = note.body;
+  bodyEl.innerHTML = note.body || '';
 }
 
 function hideEditor() {
   document.getElementById('notes-empty').style.display = '';
   document.getElementById('note-title').style.display = 'none';
   document.getElementById('note-body').style.display = 'none';
+  document.getElementById('notes-fmt-bar').classList.remove('visible');
   document.getElementById('notes-delete-btn').style.display = 'none';
   currentNoteId = null;
 }
@@ -1501,13 +1547,60 @@ function saveCurrentNote() {
   const note = notes.find(n => n.id === currentNoteId);
   if (!note) return;
   note.title = document.getElementById('note-title').value;
-  note.body = document.getElementById('note-body').value;
+  note.body = document.getElementById('note-body').innerHTML;
   note.updated = Date.now();
   // Move to top
   const idx = notes.indexOf(note);
   if (idx > 0) { notes.splice(idx, 1); notes.unshift(note); }
   saveNotes(notes);
   renderNotesList();
+}
+
+/* ── Rich-text helpers ── */
+function fmtCmd(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById('note-body').focus();
+  saveCurrentNote();
+  updateFmtBar();
+}
+
+function insertHR() {
+  document.execCommand('insertHTML', false, '<hr>');
+  document.getElementById('note-body').focus();
+  saveCurrentNote();
+}
+
+function onBodyInput() {
+  // Auto-convert "----" (4+ dashes) to <hr>
+  const bodyEl = document.getElementById('note-body');
+  const sel = window.getSelection();
+  if (sel.rangeCount) {
+    const node = sel.anchorNode;
+    if (node && node.nodeType === 3) {
+      const text = node.textContent;
+      const match = text.match(/^-{4,}$/);
+      if (match) {
+        const range = document.createRange();
+        range.selectNode(node);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand('insertHTML', false, '<hr><br>');
+      }
+    }
+  }
+  saveCurrentNote();
+  updateFmtBar();
+}
+
+function updateFmtBar() {
+  document.querySelectorAll('.notes-fmt-btn').forEach(btn => {
+    const cmd = btn.getAttribute('onclick');
+    if (cmd && cmd.includes("'bold'")) btn.classList.toggle('active', document.queryCommandState('bold'));
+    if (cmd && cmd.includes("'italic'")) btn.classList.toggle('active', document.queryCommandState('italic'));
+    if (cmd && cmd.includes("'underline'")) btn.classList.toggle('active', document.queryCommandState('underline'));
+    if (cmd && cmd.includes("'insertUnorderedList'")) btn.classList.toggle('active', document.queryCommandState('insertUnorderedList'));
+    if (cmd && cmd.includes("'insertOrderedList'")) btn.classList.toggle('active', document.queryCommandState('insertOrderedList'));
+  });
 }
 
 function deleteCurrentNote() {
@@ -1524,11 +1617,12 @@ function deleteCurrentNote() {
 function renderNotesList() {
   const q = (document.getElementById('notes-search').value || '').toLowerCase().trim();
   let notes = getNotes();
-  if (q) notes = notes.filter(n => (n.title + ' ' + n.body).toLowerCase().includes(q));
+  if (q) notes = notes.filter(n => (n.title + ' ' + (n.body || '').replace(/<[^>]+>/g, ' ')).toLowerCase().includes(q));
   const list = document.getElementById('notes-list');
   list.innerHTML = notes.map(n => {
     const title = n.title || 'New Note';
-    const preview = n.body ? n.body.substring(0, 60).replace(/\n/g, ' ') : 'No additional text';
+    const plainBody = n.body ? n.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+    const preview = plainBody ? plainBody.substring(0, 60) : 'No additional text';
     const date = formatNoteDate(n.updated);
     const active = n.id === currentNoteId ? ' active' : '';
     return `<div class="note-item${active}" onclick="selectNote('${n.id}')">
@@ -1553,6 +1647,11 @@ function formatNoteDate(ts) {
 // Close notes on Escape
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('notes-overlay').classList.contains('open')) closeNotes();
+});
+
+// Update formatting toolbar active states on selection change
+document.addEventListener('selectionchange', () => {
+  if (currentNoteId) updateFmtBar();
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
