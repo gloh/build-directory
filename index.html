@@ -275,9 +275,13 @@
   .col-next    .col-header { border-bottom: 2px solid rgba(108,180,255,0.2); }
   .col-next    .col-count  { background: rgba(108,180,255,0.08); color: #6cb4ff; }
 
-  .col-backlog .col-title { color: #555; }
-  .col-backlog .col-header { border-bottom: 2px solid #1c1c1c; }
-  .col-backlog .col-count  { background: #141414; color: #444; }
+  .col-backlog .col-title { color: #888; }
+  .col-backlog .col-header { border-bottom: 2px solid #242424; }
+  .col-backlog .col-count  { background: #1a1a1a; color: #777; }
+
+  .col-icebox  .col-title { color: #6b8ba8; }
+  .col-icebox  .col-header { border-bottom: 2px solid rgba(107,139,168,0.2); }
+  .col-icebox  .col-count  { background: rgba(107,139,168,0.08); color: #6b8ba8; }
 
   .col-done    .col-title { color: #34d399; }
   .col-done    .col-header { border-bottom: 2px solid rgba(52,211,153,0.15); }
@@ -309,6 +313,8 @@
   .kcard:hover { border-color: #262626; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
   .kcard.dragging { opacity: 0.35; cursor: grabbing; }
   .kcard.search-hidden { display: none; }
+  .kcard.drop-before { box-shadow: 0 -2px 0 0 #818cf8; }
+  .kcard.drop-after  { box-shadow: 0  2px 0 0 #818cf8; }
 
   .kcard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 4px; }
   .kcard-actions { display: flex; gap: 4px; flex-shrink: 0; }
@@ -638,7 +644,7 @@
 
   <div class="project-card" data-card-id="bureau-ondemand" data-status="prototype">
     <div class="card-header">
-      <span class="project-name"><svg class="project-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#001E3C"/><path d="M7 22 Q 16 6, 25 22" stroke="#009FDA" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M10 22 Q 16 12, 22 22" stroke="#C41F3E" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="16" cy="22" r="1.6" fill="#17B0AF"/></svg>Bureau OnDemand</span>
+      <span class="project-name"><img class="project-logo" src="images/crs-favicon.webp" alt="">Bureau OnDemand</span>
       <div class="card-header-right">
         <span class="status-badge status-prototype">Prototype</span>
         <button class="eye-btn" onclick="toggleProjectArchive('bureau-ondemand', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
@@ -648,7 +654,6 @@
     <div class="meta-grid">
       <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Apr 21, 2026</div></div>
       <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-value">Landing pages (pre-app)</div></div>
-      <div class="meta-item"><div class="meta-label">Plans</div><div class="meta-value">Essentials $6.95 · Pro $10.95</div></div>
       <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/bureau-ondemand-*</div></div>
     </div>
     <div class="tech-tags"><span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Vercel</span><span class="tech-tag">Equifax</span><span class="tech-tag">TransUnion</span><span class="tech-tag">White-label</span><span class="tech-tag">FCRA</span></div>
@@ -814,13 +819,13 @@
   <div class="board-scroll">
     <div class="board">
 
-      <div class="column col-backlog">
+      <div class="column col-active">
         <div class="col-header">
-          <span class="col-title">Backlog</span>
-          <span class="col-count" id="count-backlog">0</span>
+          <span class="col-title">Active</span>
+          <span class="col-count" id="count-active">0</span>
         </div>
-        <div class="col-cards" id="col-backlog"
-          ondragover="onDragOver(event)" ondrop="onDrop(event,'backlog')" ondragleave="onDragLeave(event)">
+        <div class="col-cards" id="col-active"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'active')" ondragleave="onDragLeave(event)">
         </div>
       </div>
 
@@ -834,13 +839,23 @@
         </div>
       </div>
 
-      <div class="column col-active">
+      <div class="column col-backlog">
         <div class="col-header">
-          <span class="col-title">Active</span>
-          <span class="col-count" id="count-active">0</span>
+          <span class="col-title">Backlog</span>
+          <span class="col-count" id="count-backlog">0</span>
         </div>
-        <div class="col-cards" id="col-active"
-          ondragover="onDragOver(event)" ondrop="onDrop(event,'active')" ondragleave="onDragLeave(event)">
+        <div class="col-cards" id="col-backlog"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'backlog')" ondragleave="onDragLeave(event)">
+        </div>
+      </div>
+
+      <div class="column col-icebox">
+        <div class="col-header">
+          <span class="col-title">Icebox</span>
+          <span class="col-count" id="count-icebox">0</span>
+        </div>
+        <div class="col-cards" id="col-icebox"
+          ondragover="onDragOver(event)" ondrop="onDrop(event,'icebox')" ondragleave="onDragLeave(event)">
         </div>
       </div>
 
@@ -984,12 +999,23 @@ function setFilter(f, el) {
 const COL_KEY      = 'gl-bl-cols-v1';
 const ARCH_KEY     = 'gl-archived-v2';
 const DONE_KEY     = 'gl-done-v1';
+const ORDER_KEY    = 'gl-bl-order-v1';
 const getColMap    = () => { try { return JSON.parse(localStorage.getItem(COL_KEY)||'{}'); }  catch { return {}; } };
 const getArchived  = () => { try { return JSON.parse(localStorage.getItem(ARCH_KEY)||'[]'); } catch { return []; } };
 const getDone      = () => { try { return JSON.parse(localStorage.getItem(DONE_KEY)||'[]'); } catch { return []; } };
+const getOrder     = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)||'{}'); } catch { return {}; } };
 const saveColMap   = m => localStorage.setItem(COL_KEY, JSON.stringify(m));
 const saveArchived = a => localStorage.setItem(ARCH_KEY, JSON.stringify(a));
 const saveDone     = d => localStorage.setItem(DONE_KEY, JSON.stringify(d));
+const saveOrder    = o => localStorage.setItem(ORDER_KEY, JSON.stringify(o));
+
+// ── Drag-target state (for within-column sorting) ────────────────────────────
+let dragTargetCardId = null;
+let dragTargetPos    = null;  // 'before' | 'after'
+function clearDropMarkers() {
+  document.querySelectorAll('.kcard.drop-before, .kcard.drop-after')
+    .forEach(c => c.classList.remove('drop-before', 'drop-after'));
+}
 
 // ── Eye SVGs ─────────────────────────────────────────────────────────────────
 const EYE_OPEN = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
@@ -1033,50 +1059,86 @@ function buildKCard(card, archived, done) {
       e.dataTransfer.setData('text/plain', card.id);
       setTimeout(() => el.classList.add('dragging'), 0);
     });
-    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); clearDropMarkers(); dragTargetCardId = null; dragTargetPos = null; });
+  }
+
+  // within-column sorting: track hover position on every (non-archived) card
+  if (!archived) {
+    el.addEventListener('dragover', e => {
+      const rect = el.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      dragTargetCardId = card.id;
+      dragTargetPos = e.clientY < midY ? 'before' : 'after';
+      clearDropMarkers();
+      el.classList.add('drop-' + dragTargetPos);
+    });
+    el.addEventListener('dragleave', () => {
+      el.classList.remove('drop-before', 'drop-after');
+    });
   }
 
   return el;
 }
 
 // ── Render kanban ─────────────────────────────────────────────────────────────
+const BL_COLS = ['active','next','backlog','icebox','done'];
+
 function renderBoard() {
-  ['active','next','backlog','done'].forEach(c => document.getElementById('col-'+c).innerHTML = '');
+  BL_COLS.forEach(c => document.getElementById('col-'+c).innerHTML = '');
 
   const colMap   = getColMap();
   const archived = getArchived();
   const done     = getDone();
+  const order    = getOrder();
+
+  // Bucket cards per column along with renderer factories
+  const byCol = { active: [], next: [], backlog: [], icebox: [], done: [] };
+  const builders = {};
 
   BL_CARDS.forEach(card => {
+    builders[card.id] = doneFlag => buildKCard(card, false, doneFlag);
     if (done.includes(card.id)) {
-      document.getElementById('col-done').appendChild(buildKCard(card, false, true));
+      byCol.done.push(card.id);
     } else if (!archived.includes(card.id)) {
       const col = colMap[card.id] || card.defaultCol;
-      document.getElementById('col-'+col).appendChild(buildKCard(card, false, false));
+      (byCol[col] || byCol.backlog).push(card.id);
     }
   });
 
-  // Render project cards with "buildlist" status as kanban cards in backlog
+  // Render project cards with "buildlist" status as kanban cards
   const statuses = getStatuses();
   document.querySelectorAll('.project-card').forEach(card => {
     const cardId = card.dataset.cardId;
     const status = statuses[cardId] || card.dataset.status;
     if (status !== 'buildlist') return;
     const blId = 'proj-' + cardId;
+    const cardObj = {
+      id: blId,
+      name: card.querySelector('.project-name').textContent.trim(),
+      desc: card.querySelector('.project-purpose')?.textContent || '',
+      tags: Array.from(card.querySelectorAll('.tech-tag')).map(t => t.textContent)
+    };
+    builders[blId] = doneFlag => buildKCard(cardObj, false, doneFlag);
     if (done.includes(blId)) {
-      document.getElementById('col-done').appendChild(buildKCard({
-        id: blId, name: card.querySelector('.project-name').textContent.trim(),
-        desc: card.querySelector('.project-purpose')?.textContent || '',
-        tags: Array.from(card.querySelectorAll('.tech-tag')).map(t => t.textContent)
-      }, false, true));
+      byCol.done.push(blId);
     } else if (!archived.includes(blId)) {
       const col = colMap[blId] || 'backlog';
-      document.getElementById('col-'+col).appendChild(buildKCard({
-        id: blId, name: card.querySelector('.project-name').textContent.trim(),
-        desc: card.querySelector('.project-purpose')?.textContent || '',
-        tags: Array.from(card.querySelectorAll('.tech-tag')).map(t => t.textContent)
-      }, false, false));
+      (byCol[col] || byCol.backlog).push(blId);
     }
+  });
+
+  // Apply saved per-column order; unknown ids append at the end in insertion order
+  BL_COLS.forEach(col => {
+    const savedOrder = order[col] || [];
+    const rank = id => {
+      const i = savedOrder.indexOf(id);
+      return i === -1 ? Infinity : i;
+    };
+    byCol[col].sort((a, b) => rank(a) - rank(b));
+    byCol[col].forEach(id => {
+      const el = builders[id](col === 'done');
+      document.getElementById('col-'+col).appendChild(el);
+    });
   });
 
   updateCounts();
@@ -1084,7 +1146,7 @@ function renderBoard() {
 }
 
 function updateCounts() {
-  ['active','next','backlog','done'].forEach(c => {
+  BL_COLS.forEach(c => {
     const n = document.querySelectorAll(`#col-${c} .kcard:not(.search-hidden)`).length;
     document.getElementById('count-'+c).textContent = n;
   });
@@ -1169,7 +1231,7 @@ function onDrop(e, col) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   const id = e.dataTransfer.getData('text/plain');
-  if (!id) return;
+  if (!id) { clearDropMarkers(); return; }
   const d = getDone();
   if (col === 'done') {
     if (!d.includes(id)) d.push(id);
@@ -1179,6 +1241,37 @@ function onDrop(e, col) {
     if (i !== -1) { d.splice(i, 1); saveDone(d); }
     const m = getColMap(); m[id] = col; saveColMap(m);
   }
+
+  // Persist sort order within the target column
+  const order = getOrder();
+  // Seed target column with its current DOM order so we can position relative to any card
+  if (!order[col]) order[col] = [];
+  Array.from(document.querySelectorAll(`#col-${col} .kcard`))
+    .map(el => el.dataset.cardId)
+    .forEach(cid => { if (!order[col].includes(cid)) order[col].push(cid); });
+  // Remove the dragged id from every column's order
+  BL_COLS.forEach(c => {
+    if (!order[c]) return;
+    const idx = order[c].indexOf(id);
+    if (idx !== -1) order[c].splice(idx, 1);
+  });
+  if (dragTargetCardId && dragTargetCardId !== id) {
+    const targetIdx = order[col].indexOf(dragTargetCardId);
+    if (targetIdx === -1) {
+      order[col].push(id);
+    } else {
+      const insertAt = dragTargetPos === 'before' ? targetIdx : targetIdx + 1;
+      order[col].splice(insertAt, 0, id);
+    }
+  } else {
+    order[col].push(id);
+  }
+  saveOrder(order);
+
+  dragTargetCardId = null;
+  dragTargetPos = null;
+  clearDropMarkers();
+
   renderBoard(); applySearch();
 }
 
