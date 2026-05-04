@@ -148,7 +148,13 @@
     background: #151525; color: #6874d8; border: 1px solid #1e2040;
   }
 
-  .card-links { display: flex; gap: 12px; padding-top: 14px; border-top: 1px solid #1a1a1a; }
+  .card-links { display: flex; gap: 12px; padding-top: 14px; border-top: 1px solid #1a1a1a; flex-wrap: wrap; }
+  .bureau-row-label {
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid #1a1a1a;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #d8a44a;
+  }
+  .bureau-row-label + .card-links { padding-top: 8px; border-top: none; margin-bottom: 4px; }
   .card-link {
     font-size: 12px; color: #4a88c0; text-decoration: none;
     display: flex; align-items: center; gap: 4px; transition: color 0.12s;
@@ -345,6 +351,115 @@
     font-size: 9.5px; padding: 1px 6px; border-radius: 4px;
     background: #141424; color: #4a58b8; border: 1px solid #1a1a38;
   }
+
+  /* ── Build-list card detail modal ── */
+  .kcard-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    display: none; align-items: flex-start; justify-content: center;
+    z-index: 2000; padding: 64px 20px 20px;
+    opacity: 0; transition: opacity 0.15s;
+    overflow-y: auto;
+  }
+  .kcard-modal-overlay.open { display: flex; opacity: 1; }
+
+  .kcard-modal {
+    background: #0f0f0f; border: 1px solid #232323; border-radius: 14px;
+    width: 100%; max-width: 640px; padding: 28px;
+    box-shadow: 0 24px 72px rgba(0,0,0,0.6);
+    transform: translateY(-8px); transition: transform 0.15s;
+    margin: auto 0;
+  }
+  .kcard-modal-overlay.open .kcard-modal { transform: translateY(0); }
+
+  .kcard-modal-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 14px; margin-bottom: 14px;
+  }
+  .kcard-modal-title {
+    font-size: 19px; font-weight: 600; color: #fff; line-height: 1.3;
+    display: flex; align-items: center; gap: 0; flex: 1; min-width: 0;
+  }
+  .kcard-modal-close {
+    background: none; border: 1px solid #232323; border-radius: 6px;
+    color: #666; cursor: pointer; padding: 4px 6px;
+    font-family: inherit; font-size: 14px; line-height: 1;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+    flex-shrink: 0;
+  }
+  .kcard-modal-close:hover { color: #ddd; border-color: #3a3a3a; background: #181818; }
+  .kcard-modal-close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+  .kcard-modal-col {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; margin-bottom: 14px;
+    background: rgba(108,180,255,0.08); color: #6cb4ff;
+    border: 1px solid rgba(108,180,255,0.2);
+  }
+  .kcard-modal-col[data-col="active"] { background: rgba(52,211,153,0.1); color: #34d399; border-color: rgba(52,211,153,0.2); }
+  .kcard-modal-col[data-col="next"]   { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.2); }
+  .kcard-modal-col[data-col="done"]   { background: rgba(52,211,153,0.06); color: #6bbf94; border-color: rgba(52,211,153,0.15); }
+  .kcard-modal-col[data-col="icebox"] { background: rgba(156,163,175,0.08); color: #9ca3af; border-color: rgba(156,163,175,0.2); }
+
+  .kcard-modal-desc { color: #bbb; font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
+
+  .kcard-modal-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px; margin-bottom: 18px;
+    padding-top: 14px; border-top: 1px solid #1a1a1a;
+  }
+
+  .kcard-modal-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 18px; }
+
+  .kcard-modal-links { display: flex; gap: 14px; flex-wrap: wrap;
+    padding-top: 14px; border-top: 1px solid #1a1a1a; margin-bottom: 4px;
+  }
+
+  .kcard-modal-enh {
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid #1a1a1a;
+  }
+  .kcard-modal-enh-label {
+    display: flex; align-items: center; gap: 6px;
+    color: #666; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .kcard-modal-enh-count {
+    font-size: 9px; padding: 1px 6px; border-radius: 999px;
+    background: rgba(99,102,241,0.08); color: #818cf8; font-weight: 500;
+  }
+  .kcard-modal-enh-list { list-style: none; margin: 0 0 10px 0; padding: 0; }
+  .kcard-modal-enh-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid #151515;
+    font-size: 13px; color: #bbb; line-height: 1.5;
+  }
+  .kcard-modal-enh-item.done .enh-text { text-decoration: line-through; color: #555; }
+  .kcard-modal-enh-item .enh-text { flex: 1; }
+  .kcard-modal-enh-item .enh-cb { margin-top: 3px; accent-color: #818cf8; cursor: pointer; }
+  .kcard-modal-enh-item .enh-remove {
+    background: none; border: none; color: #333; cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 0 4px; transition: color 0.12s;
+  }
+  .kcard-modal-enh-item .enh-remove:hover { color: #a55; }
+  .kcard-modal-enh-empty { color: #444; font-size: 12px; padding: 4px 0; font-style: italic; }
+
+  .kcard-modal-enh-add { display: flex; gap: 6px; margin-top: 10px; }
+  .kcard-modal-enh-input {
+    flex: 1; background: #141414; border: 1px solid #232323; border-radius: 6px;
+    color: #ddd; padding: 7px 10px; font-size: 12px; font-family: inherit;
+    outline: none; transition: border-color 0.12s;
+  }
+  .kcard-modal-enh-input:focus { border-color: #3a3a5a; }
+  .kcard-modal-enh-add-btn {
+    background: #1a1a2e; border: 1px solid #272748; border-radius: 6px;
+    color: #818cf8; cursor: pointer; padding: 7px 12px; font-size: 12px;
+    font-family: inherit; font-weight: 600; transition: background 0.12s, color 0.12s;
+  }
+  .kcard-modal-enh-add-btn:hover { background: #22223a; color: #a5b4fc; }
+
+  .kcard { cursor: pointer; }
+  .kcard[draggable="true"] { cursor: grab; }
+  .kcard[draggable="true"]:active { cursor: grabbing; }
 
   /* ── Filter pills ── */
   .filter-bar { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 24px; }
@@ -581,6 +696,26 @@
   <!-- PROJECTS LIST                                                       -->
   <!-- ══════════════════════════════════════════════════════════════════ -->
 
+  <div class="project-card" data-card-id="yankees-ticket-manager" data-status="prototype">
+    <div class="card-header">
+      <span class="project-name"><img class="project-logo" src="https://www.mlbstatic.com/team-logos/147.svg" alt="">Yankees Ticket Manager App</span>
+      <div class="card-header-right">
+        <span class="status-badge status-prototype">Prototype</span>
+        <button class="eye-btn" onclick="toggleProjectArchive('yankees-ticket-manager', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <p class="project-purpose">Single-user app to plan, sell, and break even on Yankees season tickets. Pulls real schedule, tier-classifies games, recommends time-decay pricing, lists across marketplaces (Ticketmaster, TickPick, SeatGeek, Gametime, P2P), captures Maybe-game decisions via email magic links, and chats with your data via AI Gateway.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">May 3, 2026</div></div>
+      <div class="meta-item"><div class="meta-label">Stack</div><div class="meta-value">Next.js 16, Drizzle, AI SDK 6</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/Yankees/yankees-tickets</div></div>
+    </div>
+    <div class="tech-tags"><span class="tech-tag">Next.js 16</span><span class="tech-tag">Drizzle</span><span class="tech-tag">SQLite</span><span class="tech-tag">Vercel AI SDK</span><span class="tech-tag">Resend</span><span class="tech-tag">MLB Stats API</span></div>
+    <div class="card-links">
+      <a class="card-link" href="http://localhost:3030" target="_blank">Local dev</a>
+    </div>
+  </div>
+
   <div class="project-card" data-card-id="post-monster" data-status="active">
     <div class="card-header">
       <span class="project-name"><img class="project-logo" src="images/post-monster-logo.png" alt="">Post Monster</span>
@@ -650,16 +785,26 @@
         <button class="eye-btn" onclick="toggleProjectArchive('bureau-ondemand', this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
     </div>
-    <p class="project-purpose">Bureau-branded self-serve onboarding product powered by CRS in the background. Lets businesses choose a plan, complete digital onboarding, and start pulling credit reports in days. Two bureau-branded landing pages (Equifax, TransUnion); a shared web application will follow.</p>
+    <p class="project-purpose">Bureau-branded self-serve product powered by CRS in the background: landing page → digital onboarding → platform app. Lets businesses choose a plan, complete digital onboarding, and start pulling credit reports in days. Two end-to-end flows: Equifax and TransUnion.</p>
     <div class="meta-grid">
       <div class="meta-item"><div class="meta-label">Started</div><div class="meta-value">Apr 21, 2026</div></div>
-      <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-value">Landing pages (pre-app)</div></div>
-      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/bureau-ondemand-*</div></div>
+      <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-value">Full flow prototype</div></div>
+      <div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">~/Projects/bureau-ondemand/*</div></div>
     </div>
     <div class="tech-tags"><span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Vercel</span><span class="tech-tag">Equifax</span><span class="tech-tag">TransUnion</span><span class="tech-tag">White-label</span><span class="tech-tag">FCRA</span></div>
+    <div class="bureau-row-label">EQF · Equifax</div>
     <div class="card-links">
-      <a class="card-link" href="https://bureau-ondemand-equifax.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Equifax Landing</a>
-      <a class="card-link" href="https://bureau-ondemand-transunion.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>TransUnion Landing</a>
+      <a class="card-link" href="https://bureau-ondemand-equifax.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Landing</a>
+      <a class="card-link" href="https://bureau-ondemand-equifax-app.vercel.app/?bureau=equifax" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Onboarding</a>
+      <a class="card-link" href="https://bureau-ondemand-equifax-app.vercel.app/app.html?skipGuard=1&bureau=equifax" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Platform</a>
+      <a class="card-link" href="https://docs.google.com/presentation/d/1MB7fDJp-wD8StqcrG4qTRicCww1dwEOyzArZlSjbRr0/edit?usp=sharing" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Deck</a>
+    </div>
+    <div class="bureau-row-label">TUC · TransUnion</div>
+    <div class="card-links">
+      <a class="card-link" href="https://bureau-ondemand-transunion.vercel.app" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Landing</a>
+      <a class="card-link" href="https://bureau-ondemand-transunion-app.vercel.app/?bureau=transunion" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Onboarding</a>
+      <a class="card-link" href="https://bureau-ondemand-transunion-app.vercel.app/app.html?skipGuard=1&bureau=transunion" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Platform</a>
+      <a class="card-link" href="https://docs.google.com/presentation/d/13cotOn1RyWFXdey3SNi0hLIjBel3gVKRuue9miQu0no/edit?usp=sharing" target="_blank"><svg viewBox="0 0 16 16"><path d="M4.5 2A2.5 2.5 0 002 4.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-3a.5.5 0 00-1 0v3A1.5 1.5 0 0111.5 13h-7A1.5 1.5 0 013 11.5v-7A1.5 1.5 0 014.5 3h3a.5.5 0 000-1h-3zM9 2.5a.5.5 0 01.5-.5H14a.5.5 0 01.5.5V7a.5.5 0 01-1 0V3.707l-5.146 5.147a.5.5 0 01-.708-.708L12.293 3H9.5a.5.5 0 01-.5-.5z"/></svg>Deck</a>
     </div>
   </div>
 
@@ -938,6 +1083,37 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- BUILD-LIST CARD DETAIL MODAL                                      -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="kcard-modal-overlay" id="kcard-modal-overlay" onclick="if(event.target===this)closeKCardModal()">
+  <div class="kcard-modal" id="kcard-modal" role="dialog" aria-modal="true">
+    <div class="kcard-modal-header">
+      <div class="kcard-modal-title" id="kcard-modal-title"></div>
+      <button class="kcard-modal-close" onclick="closeKCardModal()" title="Close (Esc)">
+        <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+    <span class="kcard-modal-col" id="kcard-modal-col"></span>
+    <div class="kcard-modal-desc" id="kcard-modal-desc"></div>
+    <div class="kcard-modal-meta" id="kcard-modal-meta"></div>
+    <div class="kcard-modal-tags" id="kcard-modal-tags"></div>
+    <div class="kcard-modal-links" id="kcard-modal-links"></div>
+    <div class="kcard-modal-enh">
+      <div class="kcard-modal-enh-label">
+        Enhancements
+        <span class="kcard-modal-enh-count" id="kcard-modal-enh-count">0</span>
+      </div>
+      <ul class="kcard-modal-enh-list" id="kcard-modal-enh-list"></ul>
+      <div class="kcard-modal-enh-add">
+        <input class="kcard-modal-enh-input" id="kcard-modal-enh-input" placeholder="Add an enhancement..."
+          onkeydown="if(event.key==='Enter')addKCardEnh()">
+        <button class="kcard-modal-enh-add-btn" onclick="addKCardEnh()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Build list card data ─────────────────────────────────────────────────────
 const BL_CARDS = [
@@ -1061,6 +1237,11 @@ function buildKCard(card, archived, done) {
     });
     el.addEventListener('dragend', () => { el.classList.remove('dragging'); clearDropMarkers(); dragTargetCardId = null; dragTargetPos = null; });
   }
+
+  el.addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    openKCardModal(card.id);
+  });
 
   // within-column sorting: track hover position on every (non-archived) card
   if (!archived) {
@@ -1525,6 +1706,157 @@ function initEnhancements() {
     card.appendChild(buildEnhSection(cardId));
   });
 }
+
+// ── Build-list card detail modal ─────────────────────────────────────────────
+const COL_LABEL = { active:'Active', next:'Next', backlog:'Backlog', icebox:'Icebox', done:'Done' };
+let currentKCardModalId = null;
+
+function getKCardData(cardId) {
+  let cardObj = BL_CARDS.find(c => c.id === cardId);
+  let logoHtml = '';
+  let meta = [];
+  let links = [];
+
+  if (!cardObj && cardId.startsWith('proj-')) {
+    const projId = cardId.slice(5);
+    const projEl = document.querySelector(`.project-card[data-card-id="${projId}"]`);
+    if (projEl) {
+      const nameEl = projEl.querySelector('.project-name');
+      const logoEl = nameEl?.querySelector('.project-logo');
+      logoHtml = logoEl ? logoEl.outerHTML : '';
+      const nameClone = nameEl.cloneNode(true);
+      nameClone.querySelectorAll('.project-logo').forEach(n => n.remove());
+      cardObj = {
+        id: cardId,
+        name: nameClone.textContent.trim(),
+        desc: projEl.querySelector('.project-purpose')?.textContent?.trim() || '',
+        tags: Array.from(projEl.querySelectorAll('.tech-tag')).map(t => t.textContent)
+      };
+      meta = Array.from(projEl.querySelectorAll(':scope > .meta-grid > .meta-item')).map(m => ({
+        label: m.querySelector('.meta-label')?.textContent || '',
+        value: m.querySelector('.meta-value')?.innerHTML || ''
+      }));
+      links = Array.from(projEl.querySelectorAll(':scope > .card-links > .card-link')).map(a => ({
+        href: a.getAttribute('href'),
+        html: a.innerHTML
+      }));
+    }
+  }
+  return cardObj ? { cardObj, logoHtml, meta, links } : null;
+}
+
+function openKCardModal(cardId) {
+  const data = getKCardData(cardId);
+  if (!data) return;
+  const { cardObj, logoHtml, meta, links } = data;
+
+  const colMap = getColMap();
+  const done = getDone();
+  const archived = getArchived();
+  let col;
+  if (done.includes(cardId)) col = 'done';
+  else if (archived.includes(cardId)) col = cardObj.defaultCol || 'backlog';
+  else col = colMap[cardId] || cardObj.defaultCol || 'backlog';
+
+  const titleEl = document.getElementById('kcard-modal-title');
+  titleEl.innerHTML = '';
+  if (logoHtml) titleEl.innerHTML = logoHtml;
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = cardObj.name;
+  titleEl.appendChild(nameSpan);
+
+  const colEl = document.getElementById('kcard-modal-col');
+  colEl.textContent = COL_LABEL[col] || col;
+  colEl.dataset.col = col;
+
+  document.getElementById('kcard-modal-desc').textContent = cardObj.desc || '';
+
+  const metaWrap = document.getElementById('kcard-modal-meta');
+  if (meta.length) {
+    metaWrap.style.display = '';
+    metaWrap.innerHTML = meta.map(m =>
+      `<div class="meta-item"><div class="meta-label">${escHtml(m.label)}</div><div class="meta-value">${m.value}</div></div>`
+    ).join('');
+  } else {
+    metaWrap.style.display = 'none';
+    metaWrap.innerHTML = '';
+  }
+
+  const tagsWrap = document.getElementById('kcard-modal-tags');
+  tagsWrap.innerHTML = (cardObj.tags || []).map(t => `<span class="tech-tag">${escHtml(t)}</span>`).join('');
+
+  const linksWrap = document.getElementById('kcard-modal-links');
+  if (links.length) {
+    linksWrap.style.display = '';
+    linksWrap.innerHTML = links.map(l =>
+      `<a class="card-link" href="${escHtml(l.href)}" target="_blank" rel="noopener">${l.html}</a>`
+    ).join('');
+  } else {
+    linksWrap.style.display = 'none';
+    linksWrap.innerHTML = '';
+  }
+
+  renderKCardModalEnh(cardId);
+
+  currentKCardModalId = cardId;
+  document.getElementById('kcard-modal-overlay').classList.add('open');
+}
+
+function renderKCardModalEnh(cardId) {
+  const enh = (getEnhancements()[cardId] || []);
+  document.getElementById('kcard-modal-enh-count').textContent =
+    enh.length ? `${enh.filter(i => i.done).length}/${enh.length}` : '0';
+  const list = document.getElementById('kcard-modal-enh-list');
+  if (!enh.length) {
+    list.innerHTML = '<li class="kcard-modal-enh-empty">No enhancements yet.</li>';
+    return;
+  }
+  list.innerHTML = enh.map((item, i) => `
+    <li class="kcard-modal-enh-item${item.done ? ' done' : ''}">
+      <input type="checkbox" class="enh-cb" ${item.done ? 'checked' : ''}
+        onchange="toggleKCardEnhDone(${i}, this.checked)">
+      <span class="enh-text">${escHtml(item.text)}</span>
+      <button class="enh-remove" title="Remove" onclick="removeKCardEnh(${i})">&times;</button>
+    </li>
+  `).join('');
+}
+
+function toggleKCardEnhDone(idx, done) {
+  if (!currentKCardModalId) return;
+  toggleEnhDone(currentKCardModalId, idx, done);
+  renderKCardModalEnh(currentKCardModalId);
+}
+
+function removeKCardEnh(idx) {
+  if (!currentKCardModalId) return;
+  removeEnh(currentKCardModalId, idx);
+  renderKCardModalEnh(currentKCardModalId);
+}
+
+function addKCardEnh() {
+  if (!currentKCardModalId) return;
+  const input = document.getElementById('kcard-modal-enh-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const all = getEnhancements();
+  if (!all[currentKCardModalId]) all[currentKCardModalId] = [];
+  all[currentKCardModalId].push({ text, done: false });
+  saveEnhancements(all);
+  input.value = '';
+  renderKCardModalEnh(currentKCardModalId);
+  input.focus();
+}
+
+function closeKCardModal() {
+  document.getElementById('kcard-modal-overlay').classList.remove('open');
+  currentKCardModalId = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('kcard-modal-overlay')?.classList.contains('open')) {
+    closeKCardModal();
+  }
+});
 
 // ── Status dropdown ──────────────────────────────────────────────────────────
 const STATUS_KEY = 'gl-statuses-v1';
